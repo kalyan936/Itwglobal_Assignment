@@ -93,11 +93,27 @@ def clear_meetings():
 # Google Calendar Integration Endpoints
 @app.get("/api/gcal/status")
 def get_gcal_status():
+    config = gcal.get_config()
+    client_id = ""
+    client_secret = ""
+    if config and "web" in config:
+        client_id = config["web"].get("client_id", "")
+        client_secret = config["web"].get("client_secret", "")
     return {
         "configured": gcal.is_gcal_configured(),
-        "has_config": gcal.get_config() is not None,
-        "has_token": os.path.exists(gcal.TOKEN_FILE)
+        "has_config": config is not None,
+        "has_token": os.path.exists(gcal.TOKEN_FILE),
+        "client_id": client_id,
+        "client_secret": client_secret
     }
+
+@app.post("/api/gcal/disconnect")
+def disconnect_gcal():
+    try:
+        success = gcal.disconnect()
+        return {"success": success}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/gcal/auth-url")
 def get_gcal_auth_url(req: OAuthInitRequest):

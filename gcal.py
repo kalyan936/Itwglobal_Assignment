@@ -34,6 +34,13 @@ def get_config():
 def is_gcal_configured():
     return get_config() is not None and os.path.exists(TOKEN_FILE)
 
+def disconnect():
+    if os.path.exists(TOKEN_FILE):
+        os.remove(TOKEN_FILE)
+        return True
+    return False
+
+
 def get_auth_url(client_id, client_secret, redirect_uri):
     save_config(client_id, client_secret, redirect_uri)
     flow = Flow.from_client_config(

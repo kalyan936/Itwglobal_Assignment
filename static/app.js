@@ -171,11 +171,30 @@ async function fetchGcalStatus() {
         const resp = await fetch('/api/gcal/status');
         const status = await resp.json();
         
+        // Pre-fill fields if they exist
+        if (status.client_id) {
+            document.getElementById('gcal-client-id').value = status.client_id;
+        }
+        if (status.client_secret) {
+            document.getElementById('gcal-client-secret').value = status.client_secret;
+        }
+        
         if (status.configured) {
-            gcalStatusBox.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--status-done)"></i> Connected to Google Calendar`;
+            gcalStatusBox.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span><i class="fa-solid fa-circle-check" style="color: var(--status-done)"></i> Connected to Google Calendar</span>
+                    <button class="btn btn-danger" id="btn-gcal-disconnect" style="padding: 4px 8px; font-size: 11px; margin-left: 10px;">Disconnect</button>
+                </div>
+            `;
             gcalStatusBox.style.borderColor = 'var(--status-done)';
             gcalStatusBox.style.color = '#a7f3d0';
             btnGcalConfig.innerHTML = `<i class="fa-solid fa-calendar-check" style="color: var(--status-done)"></i> Calendar Connected`;
+            
+            // Add listener to disconnect button
+            const disconnectBtn = document.getElementById('btn-gcal-disconnect');
+            if (disconnectBtn) {
+                disconnectBtn.addEventListener('click', handleGcalDisconnect);
+            }
         } else {
             gcalStatusBox.innerHTML = `<i class="fa-solid fa-circle-xmark" style="color: var(--status-unidentified)"></i> Not connected. Complete form below.`;
             gcalStatusBox.style.borderColor = 'var(--status-unidentified)';
@@ -184,6 +203,20 @@ async function fetchGcalStatus() {
         }
     } catch (err) {
         console.error("Error fetching gcal status:", err);
+    }
+}
+
+// Disconnect Google Calendar
+async function handleGcalDisconnect(e) {
+    e.preventDefault();
+    if (!confirm("Are you sure you want to disconnect this Google account? Your credentials config will be saved, but the access token will be removed.")) return;
+    try {
+        const resp = await fetch('/api/gcal/disconnect', { method: 'POST' });
+        if (!resp.ok) throw new Error("Failed to disconnect");
+        showStatusBanner("Google Calendar disconnected successfully.", 3000);
+        fetchGcalStatus();
+    } catch (err) {
+        showStatusBanner(`Disconnect failed: ${err.message}`, 5000);
     }
 }
 
