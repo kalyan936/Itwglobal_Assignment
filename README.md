@@ -60,23 +60,8 @@ Ensure you are in the workspace folder and verify Python 3.10+ is installed:
 python --version
 ```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env` and fill in your values, or set environment variables in your terminal:
-```env
-# Required for research synthesis & domain extraction
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Required for direct Google Calendar OAuth via the backend API
-GOOGLE_CALENDAR_CLIENT_ID=your_google_client_id_here
-GOOGLE_CALENDAR_CLIENT_SECRET=your_google_client_secret_here
-GOOGLE_CALENDAR_REDIRECT_URI=http://127.0.0.1:8000/api/gcal/callback
-
-# Optional: Set this to use Tavily's high-quality search. If missing, the agent falls back to DuckDuckGo HTML searching.
-TAVILY_API_KEY=your_tavily_api_key_here
-
-# Optional for GitHub Pages or other static hosting: point the frontend to your deployed backend.
-API_BASE_URL=https://your-backend-host.example.com
-```
+### 2. Static Pages Setup
+Copy `.env.example` to `.env` only if you want to keep notes for local experimentation. The GitHub Pages site itself does not require environment variables or a backend.
 
 ### 3. Create Virtual Environment & Install Dependencies
 ```bash
@@ -97,15 +82,10 @@ python test_pipeline.py
 ```
 *This script runs mock meetings directly through the database and asserts successful preparation.*
 
-### 5. Connect Google Calendar
-Open the dashboard and click **Connect Google Calendar**. The browser will hit the backend API route `/api/gcal/connect`, which starts OAuth without asking you to paste the client ID or client secret into the UI.
+### 5. GitHub Pages Deployment
+Publish the repository root to GitHub Pages. The site is self-contained and uses only static HTML, CSS, and JavaScript, so there is no backend service to deploy.
 
-### 6. GitHub Pages Deployment
-If you host the frontend on GitHub Pages, make sure the repository includes a root-level `index.html` and publish the repository root, not only the `static/` folder. The frontend uses relative asset paths like `static/style.css` and `static/app.js`, so Pages can load them correctly from the root site.
-
-The backend URL is centralized in `config.js` at the repository root. Edit that file once to point the site at your deployed backend, and both the root page and the `static/` copy will pick it up.
-
-If you also want the live dashboard features, deploy the backend separately and set `API_BASE_URL` to that backend host. Without it, browser requests like `/api/meetings` and `/api/gcal/connect` will go to `github.io` and return 404.
+The dashboard includes local demo cards and a browser-only simulator. The calendar and sync buttons are present as UI affordances, but they do not call an external API in this Pages-only build.
 
 ---
 
