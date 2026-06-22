@@ -51,7 +51,7 @@ def get_auth_url(client_id, client_secret, redirect_uri):
     authorization_url, state = flow.authorization_url(
         access_type='offline',
         include_granted_scopes='true',
-        prompt='consent'
+        prompt='select_account consent'
     )
     return authorization_url
 
