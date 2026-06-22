@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Intelligence Agent Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Vanilla CSS Stylesheet -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Background Glow Blobs for Futuristic Glassmorphism Aesthetic -->
+    <div class="glow-bg">
+        <div class="blob blob-purple"></div>
+        <div class="blob blob-cyan"></div>
+        <div class="blob blob-pink"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Dashboard Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fa-solid fa-brain-circuit"></i></div>
+                <div class="logo-text">
+                    <h1>Meeting Intelligence</h1>
+                    <p>Autonomous briefs for upcoming external calls</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="btn-gcal-config">
+                    <i class="fa-brands fa-google"></i> Connect Calendar
+                </button>
+                <button class="btn btn-secondary" id="btn-sync-now">
+                    <i class="fa-solid fa-rotate"></i> Sync Sync
+                </button>
+                <button class="btn btn-primary" id="btn-open-simulator">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Simulation Mode
+                </button>
+                <button class="btn btn-danger" id="btn-clear-all" title="Clear all meetings from database">
+                    <i class="fa-solid fa-trash-can"></i> Reset
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Sync/Status Alerts -->
+            <div id="status-banner" class="status-banner hidden">
+                <span id="status-banner-text">Syncing calendar...</span>
+                <button class="close-btn" onclick="hideStatusBanner()">&times;</button>
+            </div>
+
+            <!-- Dashboard Grid Section -->
+            <section class="meetings-section">
+                <div class="section-header">
+                    <h2><i class="fa-regular fa-calendar-days"></i> Upcoming Meetings</h2>
+                    <div class="refresh-indicator">
+                        <span class="pulse-dot"></span> Auto-updating live
+                    </div>
+                </div>
+                
+                <!-- Meeting Cards Container -->
+                <div class="meetings-grid" id="meetings-grid">
+                    <!-- Cards will be injected here via JavaScript -->
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Loading upcoming meetings...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SIDEBAR DRAWER: Google Calendar Integration -->
+    <div class="drawer-overlay" id="gcal-drawer-overlay"></div>
+    <div class="drawer" id="gcal-drawer">
+        <div class="drawer-header">
+            <h3><i class="fa-brands fa-google"></i> Connect Google Calendar</h3>
+            <button class="drawer-close" id="gcal-drawer-close">&times;</button>
+        </div>
+        <div class="drawer-body">
+            <p class="drawer-subtitle">Connect your calendar to automatically fetch and research external meetings. To use this, configure credentials in your Google Cloud Console.</p>
+            
+            <div class="connection-status-box" id="gcal-connection-status">
+                <i class="fa-solid fa-circle-info"></i> Loading status...
+            </div>
+
+            <form id="gcal-config-form">
+                <div class="form-group">
+                    <label for="gcal-client-id">OAuth Client ID</label>
+                    <input type="text" id="gcal-client-id" required placeholder="Paste Google Client ID">
+                </div>
+                <div class="form-group">
+                    <label for="gcal-client-secret">OAuth Client Secret</label>
+                    <input type="password" id="gcal-client-secret" required placeholder="Paste Google Client Secret">
+                </div>
+                <div class="form-group">
+                    <label for="gcal-redirect-uri">Redirect URI</label>
+                    <input type="text" id="gcal-redirect-uri" readonly value="">
+                    <small class="form-help">Configure this exact Redirect URI in your Google Cloud API Credentials page.</small>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="btn-gcal-submit">
+                    <i class="fa-solid fa-right-to-bracket"></i> Authenticate & Connect
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR DRAWER: Simulation Mode / Mock Event Generator -->
+    <div class="drawer-overlay" id="sim-drawer-overlay"></div>
+    <div class="drawer" id="sim-drawer">
+        <div class="drawer-header">
+            <h3><i class="fa-solid fa-flask"></i> Simulator Panel</h3>
+            <button class="drawer-close" id="sim-drawer-close">&times;</button>
+        </div>
+        <div class="drawer-body">
+            <p class="drawer-subtitle">Simulate external calendar invites to watch the agent parse domain names, run scrapers/searches, and build briefs in real-time.</p>
+            
+            <!-- Quick Scenarios Presets -->
+            <div class="scenario-presets">
+                <h4>Quick Scenario Presets</h4>
+                <div class="presets-grid">
+                    <button class="btn btn-preset" onclick="loadPreset('linear')">
+                        <strong>Scenario A: Linear</strong>
+                        <span>Clear company name</span>
+                    </button>
+                    <button class="btn btn-preset" onclick="loadPreset('growthsignal')">
+                        <strong>Scenario B: GrowthSignal</strong>
+                        <span>Inferred from email</span>
+                    </button>
+                    <button class="btn btn-preset" onclick="loadPreset('ravi')">
+                        <strong>Scenario C: Ravi</strong>
+                        <span>Ambiguous personal email</span>
+                    </button>
+                </div>
+            </div>
+
+            <hr class="drawer-divider">
+
+            <!-- Mock Event Form -->
+            <form id="mock-event-form">
+                <div class="form-group">
+                    <label for="mock-title">Meeting Title</label>
+                    <input type="text" id="mock-title" required placeholder="e.g., Demo call with Linear">
+                </div>
+                <div class="form-group">
+                    <label for="mock-time">Meeting Time</label>
+                    <input type="datetime-local" id="mock-time" required>
+                </div>
+                <div class="form-group">
+                    <label for="mock-attendees">Attendee Emails</label>
+                    <input type="text" id="mock-attendees" placeholder="e.g., john@linear.app, sarah@acme.com">
+                    <small class="form-help">Comma-separated list of attendee emails.</small>
+                </div>
+                <div class="form-group">
+                    <label for="mock-desc">Meeting Description (Optional)</label>
+                    <textarea id="mock-desc" rows="4" placeholder="Add meeting context, description or agenda..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-plus"></i> Inject Event & Run Agent
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Markdown Parser Light Library for Front-End (marked.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Frontend Logic -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
