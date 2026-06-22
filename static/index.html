@@ -50,6 +50,14 @@
 
         <!-- Main Workspace -->
         <main class="main-content">
+            <div class="backend-callout" style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; padding: 14px 16px; border: 1px solid rgba(125, 211, 252, 0.24); border-radius: 16px; background: rgba(15, 23, 42, 0.56); color: #cbd5e1; backdrop-filter: blur(16px);">
+                <i class="fa-solid fa-circle-info" style="margin-top: 3px; color: #7dd3fc;"></i>
+                <div>
+                    <strong style="display: block; color: #f8fafc; margin-bottom: 4px;">Backend configuration required for live data</strong>
+                    <span style="font-size: 14px; line-height: 1.5;">If GitHub Pages is showing static mode, set the <code>api-base-url</code> meta tag in this root <code>index.html</code> or define <code>window.__API_BASE_URL__</code> before loading <code>static/app.js</code>.</span>
+                </div>
+            </div>
+
             <!-- Sync/Status Alerts -->
             <div id="status-banner" class="status-banner hidden">
                 <span id="status-banner-text">Syncing calendar...</span>
