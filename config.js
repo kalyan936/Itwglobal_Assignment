@@ -1,1 +1,1 @@
-window.__API_BASE_URL__ = window.__API_BASE_URL__ || "https://your-backend-host.example.com";
+window.__API_BASE_URL__ = window.__API_BASE_URL__ || "";
