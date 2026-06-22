@@ -34,17 +34,30 @@ function apiUrl(path) {
     return `${API_BASE_URL}${path}`;
 }
 
+function getBackendHint() {
+    if (API_BASE_URL) {
+        return `Configured backend: ${API_BASE_URL}`;
+    }
+
+    if (IS_GITHUB_PAGES) {
+        return 'Set config.js in the repo root to your backend URL, or define window.__API_BASE_URL__ before loading static/app.js.';
+    }
+
+    return 'Start the FastAPI backend locally at http://127.0.0.1:8000.';
+}
+
 function showBackendRequiredState() {
     meetingsGrid.innerHTML = `
         <div class="empty-state">
             <div class="empty-icon"><i class="fa-solid fa-cloud-slash" style="color: var(--status-unidentified)"></i></div>
             <h3>GitHub Pages mode</h3>
             <p>This frontend is deployed statically, so API requests are disabled until you point <strong>API_BASE_URL</strong> at a separate backend.</p>
+            <p class="form-help" style="margin-top: 12px;">${getBackendHint()}</p>
         </div>
     `;
 
     if (gcalStatusBox) {
-        gcalStatusBox.innerHTML = `<i class="fa-solid fa-circle-info" style="color: var(--status-unidentified)"></i> Backend not configured for this GitHub Pages deployment.`;
+        gcalStatusBox.innerHTML = `<i class="fa-solid fa-circle-info" style="color: var(--status-unidentified)"></i> ${getBackendHint()}`;
         gcalStatusBox.style.borderColor = 'var(--status-unidentified)';
         gcalStatusBox.style.color = '#fef3c7';
     }

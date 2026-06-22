@@ -103,6 +103,8 @@ Open the dashboard and click **Connect Google Calendar**. The browser will hit t
 ### 6. GitHub Pages Deployment
 If you host the frontend on GitHub Pages, make sure the repository includes a root-level `index.html` and publish the repository root, not only the `static/` folder. The frontend uses relative asset paths like `static/style.css` and `static/app.js`, so Pages can load them correctly from the root site.
 
+The backend URL is centralized in `config.js` at the repository root. Edit that file once to point the site at your deployed backend, and both the root page and the `static/` copy will pick it up.
+
 If you also want the live dashboard features, deploy the backend separately and set `API_BASE_URL` to that backend host. Without it, browser requests like `/api/meetings` and `/api/gcal/connect` will go to `github.io` and return 404.
 
 ---

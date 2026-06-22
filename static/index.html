@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta name="api-base-url" content="">
     <!-- Vanilla CSS Stylesheet -->
-    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <!-- Background Glow Blobs for Futuristic Glassmorphism Aesthetic -->
@@ -54,7 +54,7 @@
                 <i class="fa-solid fa-circle-info" style="margin-top: 3px; color: #7dd3fc;"></i>
                 <div>
                     <strong style="display: block; color: #f8fafc; margin-bottom: 4px;">Backend configuration required for live data</strong>
-                    <span style="font-size: 14px; line-height: 1.5;">If GitHub Pages is showing static mode, set the <code>api-base-url</code> meta tag in this root <code>index.html</code> or define <code>window.__API_BASE_URL__</code> before loading <code>static/app.js</code>.</span>
+                    <span style="font-size: 14px; line-height: 1.5;">Edit <code>config.js</code> at the repository root to set the backend URL, or define <code>window.__API_BASE_URL__</code> before loading <code>app.js</code>.</span>
                 </div>
             </div>
 
@@ -167,7 +167,8 @@
 
     <!-- Markdown Parser Light Library for Front-End (marked.js) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="../config.js"></script>
     <!-- Frontend Logic -->
-    <script src="static/app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
