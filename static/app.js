@@ -11,9 +11,8 @@ const btnClearAll = document.getElementById('btn-clear-all');
 const gcalDrawer = document.getElementById('gcal-drawer');
 const gcalOverlay = document.getElementById('gcal-drawer-overlay');
 const gcalClose = document.getElementById('gcal-drawer-close');
-const gcalConfigForm = document.getElementById('gcal-config-form');
 const gcalStatusBox = document.getElementById('gcal-connection-status');
-const inputRedirectUri = document.getElementById('gcal-redirect-uri');
+const btnGcalConnect = document.getElementById('btn-gcal-connect');
 
 const simDrawer = document.getElementById('sim-drawer');
 const simOverlay = document.getElementById('sim-drawer-overlay');
@@ -22,15 +21,37 @@ const mockEventForm = document.getElementById('mock-event-form');
 
 // Global State
 let pollingInterval = null;
+const  API_BASE_URL = document.querySelector('meta[name="api-base-url"]')?.content?.trim()
+    || window.__API_BASE_URL__
+    || '';
+const IS_GITHUB_PAGES = window.location.hostname.endsWith('github.io');
+
+function hasBackend() {
+    return Boolean(API_BASE_URL);
+}
+
+function apiUrl(path) {
+    return `${API_BASE_URL}${path}`;
+}
+
+function showBackendRequiredState() {
+    meetingsGrid.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-cloud-slash" style="color: var(--status-unidentified)"></i></div>
+            <h3>GitHub Pages mode</h3>
+            <p>This frontend is deployed statically, so API requests are disabled until you point <strong>API_BASE_URL</strong> at a separate backend.</p>
+        </div>
+    `;
+
+    if (gcalStatusBox) {
+        gcalStatusBox.innerHTML = `<i class="fa-solid fa-circle-info" style="color: var(--status-unidentified)"></i> Backend not configured for this GitHub Pages deployment.`;
+        gcalStatusBox.style.borderColor = 'var(--status-unidentified)';
+        gcalStatusBox.style.color = '#fef3c7';
+    }
+}
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
-    // Set redirect URI field dynamically
-    const oauthRedirect = `${window.location.origin}/api/gcal/callback`;
-    if (inputRedirectUri) {
-        inputRedirectUri.value = oauthRedirect;
-    }
-
     // Set Default Time in Simulator (current time + 2 hours)
     setDefaultMockTime();
 
@@ -45,13 +66,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnSyncNow.addEventListener('click', triggerGcalSync);
     btnClearAll.addEventListener('click', clearAllMeetings);
-    
-    gcalConfigForm.addEventListener('submit', handleGcalConfigSubmit);
+    if (btnGcalConnect) {
+        btnGcalConnect.addEventListener('click', connectGoogleCalendar);
+    }
     mockEventForm.addEventListener('submit', handleMockEventSubmit);
 
     // Initial load
-    fetchMeetings();
-    fetchGcalStatus();
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        showBackendRequiredState();
+    } else {
+        fetchMeetings();
+        fetchGcalStatus();
+    }
 
     // Start auto polling (every 6 seconds)
     startPolling();
@@ -148,8 +174,13 @@ function hideStatusBanner() {
 
 // Fetch Meetings list
 async function fetchMeetings() {
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        showBackendRequiredState();
+        return;
+    }
+
     try {
-        const resp = await fetch('/api/meetings');
+        const resp = await fetch(apiUrl('/api/meetings'));
         if (!resp.ok) throw new Error("Failed to fetch meetings");
         const meetings = await resp.json();
         renderMeetings(meetings);
@@ -167,17 +198,14 @@ async function fetchMeetings() {
 
 // Fetch Google Calendar integration status
 async function fetchGcalStatus() {
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        showBackendRequiredState();
+        return;
+    }
+
     try {
-        const resp = await fetch('/api/gcal/status');
+        const resp = await fetch(apiUrl('/api/gcal/status'));
         const status = await resp.json();
-        
-        // Pre-fill fields if they exist
-        if (status.client_id) {
-            document.getElementById('gcal-client-id').value = status.client_id;
-        }
-        if (status.client_secret) {
-            document.getElementById('gcal-client-secret').value = status.client_secret;
-        }
         
         if (status.configured) {
             gcalStatusBox.innerHTML = `
@@ -196,7 +224,7 @@ async function fetchGcalStatus() {
                 disconnectBtn.addEventListener('click', handleGcalDisconnect);
             }
         } else {
-            gcalStatusBox.innerHTML = `<i class="fa-solid fa-circle-xmark" style="color: var(--status-unidentified)"></i> Not connected. Complete form below.`;
+            gcalStatusBox.innerHTML = `<i class="fa-solid fa-circle-xmark" style="color: var(--status-unidentified)"></i> Not connected. Use the direct connect button below.`;
             gcalStatusBox.style.borderColor = 'var(--status-unidentified)';
             gcalStatusBox.style.color = '#fef3c7';
             btnGcalConfig.innerHTML = `<i class="fa-brands fa-google"></i> Connect Calendar`;
@@ -209,15 +237,30 @@ async function fetchGcalStatus() {
 // Disconnect Google Calendar
 async function handleGcalDisconnect(e) {
     e.preventDefault();
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        showStatusBanner('Connect a backend before managing Google Calendar from GitHub Pages.', 5000);
+        return;
+    }
+
     if (!confirm("Are you sure you want to disconnect this Google account? Your credentials config will be saved, but the access token will be removed.")) return;
     try {
-        const resp = await fetch('/api/gcal/disconnect', { method: 'POST' });
+        const resp = await fetch(apiUrl('/api/gcal/disconnect'), { method: 'POST' });
         if (!resp.ok) throw new Error("Failed to disconnect");
         showStatusBanner("Google Calendar disconnected successfully.", 3000);
         fetchGcalStatus();
     } catch (err) {
         showStatusBanner(`Disconnect failed: ${err.message}`, 5000);
     }
+}
+
+// Connect Google Calendar via backend OAuth redirect
+function connectGoogleCalendar() {
+    if (!hasBackend() && IS_GITHUB_PAGES) {
+        showStatusBanner('Set API_BASE_URL to your backend host before connecting Google Calendar on GitHub Pages.', 6000);
+        return;
+    }
+
+    window.location.href = apiUrl('/api/gcal/connect');
 }
 
 // Render meetings cards
@@ -397,12 +440,17 @@ function renderMeetings(meetings) {
 
 // Trigger Google Calendar Sync
 async function triggerGcalSync() {
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        showStatusBanner('Connect a backend before syncing Google Calendar on GitHub Pages.', 5000);
+        return;
+    }
+
     try {
         btnSyncNow.disabled = true;
         btnSyncNow.innerHTML = `<i class="fa-solid fa-rotate animate-spin"></i> Syncing...`;
         showStatusBanner("Connecting and syncing Google Calendar events...", 0);
 
-        const resp = await fetch('/api/gcal/sync', { method: 'POST' });
+        const resp = await fetch(apiUrl('/api/gcal/sync'), { method: 'POST' });
         
         if (resp.status === 400) {
             // Calendar not connected
@@ -427,10 +475,15 @@ async function triggerGcalSync() {
 
 // Clear all meetings
 async function clearAllMeetings() {
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        showStatusBanner('Connect a backend before clearing meetings on GitHub Pages.', 5000);
+        return;
+    }
+
     if (!confirm("Are you sure you want to clear all meetings? This resets the demo dashboard.")) return;
     
     try {
-        const resp = await fetch('/api/meetings/clear', { method: 'POST' });
+        const resp = await fetch(apiUrl('/api/meetings/clear'), { method: 'POST' });
         if (!resp.ok) throw new Error("Failed to clear meetings");
         showStatusBanner("All meetings cleared successfully.", 3000);
         fetchMeetings();
@@ -441,9 +494,14 @@ async function clearAllMeetings() {
 
 // Manually trigger research
 async function triggerResearch(meetingId) {
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        showStatusBanner('Connect a backend before queuing research on GitHub Pages.', 5000);
+        return;
+    }
+
     try {
         showStatusBanner("Queued meeting for research.", 3000);
-        const resp = await fetch(`/api/meetings/${meetingId}/research`, { method: 'POST' });
+        const resp = await fetch(apiUrl(`/api/meetings/${meetingId}/research`), { method: 'POST' });
         if (!resp.ok) throw new Error("Failed to queue research");
         fetchMeetings();
     } catch (err) {
@@ -453,9 +511,14 @@ async function triggerResearch(meetingId) {
 
 // Delete meeting
 async function deleteMeeting(meetingId) {
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        showStatusBanner('Connect a backend before deleting meetings on GitHub Pages.', 5000);
+        return;
+    }
+
     if (!confirm("Delete this meeting?")) return;
     try {
-        const resp = await fetch(`/api/meetings/${meetingId}`, { method: 'DELETE' });
+        const resp = await fetch(apiUrl(`/api/meetings/${meetingId}`), { method: 'DELETE' });
         if (!resp.ok) throw new Error("Failed to delete");
         showStatusBanner("Meeting deleted.", 3000);
         fetchMeetings();
@@ -464,47 +527,14 @@ async function deleteMeeting(meetingId) {
     }
 }
 
-// Google Calendar Credentials Submission
-async function handleGcalConfigSubmit(e) {
-    e.preventDefault();
-    const clientId = document.getElementById('gcal-client-id').value;
-    const clientSecret = document.getElementById('gcal-client-secret').value;
-    const redirectUri = document.getElementById('gcal-redirect-uri').value;
-    
-    const submitBtn = document.getElementById('btn-gcal-submit');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> Generating Link...`;
-
-    try {
-        const resp = await fetch('/api/gcal/auth-url', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: json = JSON.stringify({
-                client_id: clientId,
-                client_secret: clientSecret,
-                redirect_uri: redirectUri
-            })
-        });
-        
-        if (!resp.ok) throw new Error("Failed to save credentials");
-        const data = await resp.json();
-        
-        if (data.auth_url) {
-            // Redirect user to Google OAuth consent page
-            window.location.href = data.auth_url;
-        } else {
-            throw new Error("Did not receive auth URL from server");
-        }
-    } catch (err) {
-        showStatusBanner(`Auth setup failed: ${err.message}`, 5000);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Authenticate & Connect`;
-    }
-}
-
 // Mock Event Submission (Simulation Mode)
 async function handleMockEventSubmit(e) {
     e.preventDefault();
+
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        showStatusBanner('Connect a backend before using the simulator on GitHub Pages.', 5000);
+        return;
+    }
     
     const title = document.getElementById('mock-title').value;
     const start_time = document.getElementById('mock-time').value;
@@ -515,7 +545,7 @@ async function handleMockEventSubmit(e) {
     showStatusBanner("Simulated event injected! Background research pipeline triggered.", 5000);
 
     try {
-        const resp = await fetch('/api/meetings/mock', {
+        const resp = await fetch(apiUrl('/api/meetings/mock'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -540,6 +570,10 @@ async function handleMockEventSubmit(e) {
 
 // Polling Loop
 function startPolling() {
+    if (IS_GITHUB_PAGES && !hasBackend()) {
+        return;
+    }
+
     if (pollingInterval) clearInterval(pollingInterval);
     pollingInterval = setInterval(() => {
         fetchMeetings();

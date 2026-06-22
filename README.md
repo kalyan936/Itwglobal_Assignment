@@ -61,13 +61,21 @@ python --version
 ```
 
 ### 2. Configure Environment Variables
-Create a `.env` file or set environment variables in your terminal:
+Copy `.env.example` to `.env` and fill in your values, or set environment variables in your terminal:
 ```env
 # Required for research synthesis & domain extraction
 GEMINI_API_KEY=your_gemini_api_key_here
 
+# Required for direct Google Calendar OAuth via the backend API
+GOOGLE_CALENDAR_CLIENT_ID=your_google_client_id_here
+GOOGLE_CALENDAR_CLIENT_SECRET=your_google_client_secret_here
+GOOGLE_CALENDAR_REDIRECT_URI=http://127.0.0.1:8000/api/gcal/callback
+
 # Optional: Set this to use Tavily's high-quality search. If missing, the agent falls back to DuckDuckGo HTML searching.
 TAVILY_API_KEY=your_tavily_api_key_here
+
+# Optional for GitHub Pages or other static hosting: point the frontend to your deployed backend.
+API_BASE_URL=https://your-backend-host.example.com
 ```
 
 ### 3. Create Virtual Environment & Install Dependencies
@@ -88,6 +96,14 @@ Verify the system from calendar domain parsing to Gemini synthesis runs correctl
 python test_pipeline.py
 ```
 *This script runs mock meetings directly through the database and asserts successful preparation.*
+
+### 5. Connect Google Calendar
+Open the dashboard and click **Connect Google Calendar**. The browser will hit the backend API route `/api/gcal/connect`, which starts OAuth without asking you to paste the client ID or client secret into the UI.
+
+### 6. GitHub Pages Deployment
+If you host the frontend on GitHub Pages, make sure the repository includes a root-level `index.html` and publish the repository root, not only the `static/` folder. The frontend uses relative asset paths like `static/style.css` and `static/app.js`, so Pages can load them correctly from the root site.
+
+If you also want the live dashboard features, deploy the backend separately and set `API_BASE_URL` to that backend host. Without it, browser requests like `/api/meetings` and `/api/gcal/connect` will go to `github.io` and return 404.
 
 ---
 
