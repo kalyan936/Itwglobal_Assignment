@@ -110,6 +110,16 @@ Open your browser and navigate to **[http://127.0.0.1:8000](http://127.0.0.1:800
 
 ---
 
+## Testing with a New Google Calendar Account
+
+To test the system with a different Google account:
+1. **Clear Existing Meetings (Optional)**: Click **Reset** in the top-right header to clean the local database.
+2. **Disconnect Calendar**: Open the **Connect Calendar** panel and click **Disconnect**. This removes the active access token but retains your OAuth Client ID/Secret settings.
+3. **Re-authenticate**: Click **Authenticate & Connect** in the drawer and choose/log in to your **new Google Account** when prompted.
+4. **Sync Calendar**: Click **Sync Sync** to import and research meetings from your new account.
+
+---
+
 ## Demonstration Scenarios (Simulation Drawer)
 
 You can test the agent's autonomous behavior using the Simulator Panel inside the dashboard:
